@@ -29,7 +29,6 @@ type PlayerDraft = {
   name: string;
   avatar: string;
   colorId: PlayerColorId;
-  isDefault?: boolean;
 };
 
 const getColorForPlayer = (player: Pick<Player, 'colorId'>) => {
@@ -48,8 +47,7 @@ const ensurePlayerIdentity = (players: Player[]): Player[] => {
     return {
       ...player,
       avatar: player.avatar || fallbackAvatar,
-      colorId: color ? color.id : fallbackColor,
-      isDefault: player.isDefault
+      colorId: color ? color.id : fallbackColor
     };
   });
 };
@@ -58,8 +56,7 @@ const toDraft = (player: Player): PlayerDraft => ({
   id: player.id,
   name: player.name,
   avatar: player.avatar,
-  colorId: (getColorForPlayer(player).id as PlayerColorId),
-  isDefault: player.isDefault
+  colorId: (getColorForPlayer(player).id as PlayerColorId)
 });
 
 export function Settings() {
@@ -161,6 +158,9 @@ export function Settings() {
   const totalCards = localSettings.distinctCreatures * localSettings.duplicatesPerCreature;
   const isLargeDeck = totalCards > 200;
   const maxPlayersReached = localSettings.players.length >= 8;
+  const hasEnoughPlayers = localSettings.players.length >= 2;
+  const startButtonDisabled = !areStyleImagesLoaded || !hasEnoughPlayers;
+  const startButtonLabel = hasEnoughPlayers ? STR.settings.start : STR.settings.startAddPlayers;
 
   const updateDistinctCreatures = (value: number) => {
     const style = STYLES[localSettings.style];
@@ -243,8 +243,6 @@ export function Settings() {
   };
 
   const handleRemovePlayer = (player: Player) => {
-    if (player.isDefault) return;
-
     setLocalSettings(prev => ({
       ...prev,
       players: prev.players.filter(p => p.id !== player.id)
@@ -294,6 +292,10 @@ export function Settings() {
   };
 
   const startGame = () => {
+    if (!hasEnoughPlayers) {
+      return;
+    }
+
     // Build deck
     const cards: Card[] = [];
     const styleMeta = STYLES[localSettings.style];
@@ -365,34 +367,30 @@ export function Settings() {
               <span className="block text-lg font-semibold">{player.name}</span>
               <span className="block text-xs text-black/60">{STR.settings.tapToEdit}</span>
             </button>
-            <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium">
-              <span aria-hidden>●</span> {color.label}
-            </span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openPlayerModal(player)}
-            className="rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-white"
+        <button
+          type="button"
+          onClick={() => handleRemovePlayer(player)}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-white/70 text-red-600 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+          aria-label={STR.settings.removePlayer(player.name)}
+        >
+          <svg
+            aria-hidden
+            className="h-6 w-6"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            {STR.settings.editPlayer}
-          </button>
-          {!player.isDefault ? (
-            <button
-              type="button"
-              onClick={() => handleRemovePlayer(player)}
-              className="rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-white"
-              aria-label={STR.settings.removePlayer(player.name)}
-            >
-              {STR.settings.remove}
-            </button>
-          ) : (
-            <span className="rounded-full bg-white/50 px-3 py-1 text-xs font-medium text-black/60">
-              {STR.settings.defaultLabel}
-            </span>
-          )}
-        </div>
+            <path
+              d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21a48.108 48.108 0 00-13.456 0m12.658-.507L17.66 19.01A2.25 2.25 0 0115.415 21H8.46a2.25 2.25 0 01-2.245-1.99L5.31 5.784m5.19-.534V4.125A1.125 1.125 0 0111.625 3h1.5a1.125 1.125 0 011.125 1.125V5.25"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
     );
   };
@@ -556,9 +554,9 @@ export function Settings() {
             <button
               onClick={startGame}
               className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-200 disabled:text-blue-900/60 disabled:hover:bg-blue-200"
-              disabled={!areStyleImagesLoaded}
+              disabled={startButtonDisabled}
             >
-              {STR.settings.start}
+              {startButtonLabel}
             </button>
           </div>
         </div>

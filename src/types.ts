@@ -13,7 +13,6 @@ export type Player = {
   name: string;
   avatar: string;
   colorId: string;
-  isDefault?: boolean;
 };
 
 export type Card = {

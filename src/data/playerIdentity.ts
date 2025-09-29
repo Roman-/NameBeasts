@@ -178,7 +178,7 @@ const buildPlayerIdentity = (players: Player[], presetName?: string) => {
 
 export function createPlayerWithDefaults(
   players: Player[],
-  options?: { presetName?: string; markDefault?: boolean }
+  options?: { presetName?: string }
 ): Player {
   const identity = buildPlayerIdentity(players, options?.presetName);
 
@@ -186,15 +186,14 @@ export function createPlayerWithDefaults(
     id: generateId(),
     name: identity.name,
     avatar: identity.avatar,
-    colorId: identity.colorId,
-    ...(options?.markDefault ? { isDefault: true } : {})
+    colorId: identity.colorId
   };
 }
 
 export function createDefaultPlayers(): Player[] {
   const players: Player[] = [];
   for (let index = 0; index < 2; index++) {
-    const player = createPlayerWithDefaults(players, { markDefault: true });
+    const player = createPlayerWithDefaults(players);
     players.push(player);
   }
   return players;
