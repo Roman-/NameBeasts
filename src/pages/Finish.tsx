@@ -39,6 +39,9 @@ export function Finish() {
     return a.name.localeCompare(b.name);
   });
 
+  const scoreValues = Object.values(scores);
+  const topScore = scoreValues.length > 0 ? Math.max(...scoreValues) : 0;
+  const topScoreCount = sortedPlayers.filter(player => (scores[player.id] || 0) === topScore && topScore > 0).length;
   const totalCardsWon = Object.values(scores).reduce((sum, score) => sum + score, 0);
 
   return (
@@ -51,8 +54,8 @@ export function Finish() {
           <div className="space-y-4">
             {sortedPlayers.map((player, index) => {
               const score = scores[player.id] || 0;
-              const isWinner = index === 0 && score > 0;
-              
+              const isWinner = score > 0 && score === topScore;
+
               const color = getColorForPlayer(player.colorId);
 
               return (
@@ -84,7 +87,14 @@ export function Finish() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    {isWinner && <span className="text-2xl" aria-label="Top score">🏆</span>}
+                    {isWinner && (
+                      <span
+                        className="text-2xl"
+                        aria-label={topScoreCount > 1 ? STR.finish.topScoreTie : STR.finish.topScore}
+                      >
+                        🏆
+                      </span>
+                    )}
                     <span className="text-2xl font-bold" style={{ color: color.textOnLight }}>
                       {score}
                     </span>

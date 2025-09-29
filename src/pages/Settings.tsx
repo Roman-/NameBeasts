@@ -13,10 +13,9 @@ import {
   PLAYER_COLOR_MAP,
   PLAYER_COLORS,
   PlayerColorId,
-  createDefaultPlayers
+  createDefaultPlayers,
+  createPlayerWithDefaults
 } from '../data/playerIdentity';
-
-const NEW_PLAYER_KEY = 'new';
 
 const getDefaultSettings = (): SettingsType => ({
   style: 'Fruitfolk',
@@ -26,7 +25,7 @@ const getDefaultSettings = (): SettingsType => ({
 });
 
 type PlayerDraft = {
-  id?: string;
+  id: string;
   name: string;
   avatar: string;
   colorId: PlayerColorId;
@@ -55,15 +54,6 @@ const ensurePlayerIdentity = (players: Player[]): Player[] => {
   });
 };
 
-const buildNewPlayerDraft = (players: Player[], presetName?: string): PlayerDraft => {
-  const index = players.length;
-  return {
-    name: presetName ?? `Player ${index + 1}`,
-    avatar: PLAYER_AVATARS[index % PLAYER_AVATARS.length],
-    colorId: PLAYER_COLORS[index % PLAYER_COLORS.length].id,
-  };
-};
-
 const toDraft = (player: Player): PlayerDraft => ({
   id: player.id,
   name: player.name,
@@ -85,11 +75,13 @@ export function Settings() {
   const [localSettings, setLocalSettings] = useState<SettingsType>(normalizedSettings);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
-  const [activePlayerKey, setActivePlayerKey] = useState<string>(NEW_PLAYER_KEY);
-  const [playerDraft, setPlayerDraft] = useState<PlayerDraft>(() =>
-    buildNewPlayerDraft(normalizedSettings.players)
-  );
+  const [playerDraft, setPlayerDraft] = useState<PlayerDraft | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [lastAddedPlayerId, setLastAddedPlayerId] = useState<string | null>(null);
+
+  const playerDraftColor = playerDraft
+    ? PLAYER_COLOR_MAP[playerDraft.colorId as PlayerColorId] ?? PLAYER_COLORS[0]
+    : null;
 
   useEffect(() => {
     setLocalSettings(normalizedSettings);
@@ -105,6 +97,12 @@ export function Settings() {
       setSettings(normalizedSettings);
     }
   }, [settings, normalizedSettings, setSettings]);
+
+  useEffect(() => {
+    if (!lastAddedPlayerId) return;
+    const timeout = window.setTimeout(() => setLastAddedPlayerId(null), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [lastAddedPlayerId]);
 
   const totalCards = localSettings.distinctCreatures * localSettings.duplicatesPerCreature;
   const isLargeDeck = totalCards > 200;
@@ -125,34 +123,36 @@ export function Settings() {
     setLocalSettings(prev => ({ ...prev, duplicatesPerCreature: clamped }));
   };
 
-  const openPlayerModal = (player?: Player, presetName?: string) => {
-    if (player) {
-      setPlayerDraft(toDraft(player));
-      setActivePlayerKey(player.id);
-    } else {
-      setPlayerDraft(buildNewPlayerDraft(localSettings.players, presetName));
-      setActivePlayerKey(NEW_PLAYER_KEY);
-    }
+  const openPlayerModal = (player: Player) => {
+    setPlayerDraft(toDraft(player));
     setNameError(null);
     setIsPlayerModalOpen(true);
   };
 
+  const closePlayerModal = () => {
+    setIsPlayerModalOpen(false);
+    setPlayerDraft(null);
+    setNameError(null);
+  };
+
   const handleNameChange = (name: string) => {
-    setPlayerDraft(prev => ({ ...prev, name }));
+    setPlayerDraft(prev => (prev ? { ...prev, name } : prev));
     if (nameError) {
       setNameError(null);
     }
   };
 
   const handleAvatarSelect = (avatar: string) => {
-    setPlayerDraft(prev => ({ ...prev, avatar }));
+    setPlayerDraft(prev => (prev ? { ...prev, avatar } : prev));
   };
 
   const handleColorSelect = (colorId: PlayerColorId) => {
-    setPlayerDraft(prev => ({ ...prev, colorId }));
+    setPlayerDraft(prev => (prev ? { ...prev, colorId } : prev));
   };
 
   const handlePlayerSubmit = () => {
+    if (!playerDraft) return;
+
     const trimmedName = playerDraft.name.trim();
 
     if (!trimmedName) {
@@ -169,81 +169,66 @@ export function Settings() {
       return;
     }
 
-    if (playerDraft.id) {
-      let nextPlayers: Player[] = [];
-      setLocalSettings(prev => {
-        const updatedPlayers = prev.players.map(player =>
-          player.id === playerDraft.id
-            ? {
-                ...player,
-                name: trimmedName,
-                avatar: playerDraft.avatar,
-                colorId: playerDraft.colorId,
-                isDefault: player.isDefault
-              }
-            : player
-        );
-        nextPlayers = updatedPlayers;
-        return { ...prev, players: updatedPlayers };
-      });
+    setLocalSettings(prev => ({
+      ...prev,
+      players: prev.players.map(player =>
+        player.id === playerDraft.id
+          ? {
+              ...player,
+              name: trimmedName,
+              avatar: playerDraft.avatar,
+              colorId: playerDraft.colorId
+            }
+          : player
+      )
+    }));
 
-      const updatedPlayer = nextPlayers.find(player => player.id === playerDraft.id);
-      if (updatedPlayer) {
-        setPlayerDraft(toDraft(updatedPlayer));
-        setActivePlayerKey(updatedPlayer.id);
-      }
-      setNameError(null);
-      return;
-    }
-
-    if (maxPlayersReached) {
-      return;
-    }
-
-    const newPlayer: Player = {
-      id: generateId(),
-      name: trimmedName,
-      avatar: playerDraft.avatar,
-      colorId: playerDraft.colorId
-    };
-
-    let nextPlayers: Player[] = [];
-    setLocalSettings(prev => {
-      const updatedPlayers = [...prev.players, newPlayer];
-      nextPlayers = updatedPlayers;
-      return { ...prev, players: updatedPlayers };
-    });
-
-    setPlayerDraft(buildNewPlayerDraft(nextPlayers));
-    setActivePlayerKey(NEW_PLAYER_KEY);
+    setPlayerDraft(prev => (prev ? { ...prev, name: trimmedName } : prev));
     setNameError(null);
+    closePlayerModal();
   };
 
   const handleRemovePlayer = (player: Player) => {
     if (player.isDefault) return;
 
-    let nextPlayers: Player[] = [];
+    setLocalSettings(prev => ({
+      ...prev,
+      players: prev.players.filter(p => p.id !== player.id)
+    }));
+
+    if (playerDraft?.id === player.id) {
+      closePlayerModal();
+    }
+  };
+
+  const addPlayerWithDefaults = (presetName?: string) => {
+    if (maxPlayersReached) return;
+
+    let created: Player | null = null;
     setLocalSettings(prev => {
-      const updatedPlayers = prev.players.filter(p => p.id !== player.id);
-      nextPlayers = updatedPlayers;
-      return { ...prev, players: updatedPlayers };
+      const newPlayer = createPlayerWithDefaults(prev.players, { presetName });
+      created = newPlayer;
+      return {
+        ...prev,
+        players: [...prev.players, newPlayer]
+      };
     });
 
-    if (activePlayerKey === player.id) {
-      setPlayerDraft(buildNewPlayerDraft(nextPlayers));
-      setActivePlayerKey(NEW_PLAYER_KEY);
+    if (created) {
+      setLastAddedPlayerId(created.id);
     }
   };
 
   const addPastPlayer = (name: string) => {
-    if (maxPlayersReached) return;
-    openPlayerModal(undefined, name);
+    addPlayerWithDefaults(name);
   };
 
   const resetToDefaults = () => {
     const defaults = getDefaultSettings();
     setLocalSettings(defaults);
     setSettings(defaults);
+    setLastAddedPlayerId(null);
+    closePlayerModal();
   };
 
   const handleStyleSelect = (style: StyleId) => {
@@ -291,13 +276,13 @@ export function Settings() {
 
   const renderPlayerCard = (player: Player) => {
     const color = getColorForPlayer(player);
-    const isSelected = activePlayerKey === player.id;
+    const isRecent = lastAddedPlayerId === player.id;
 
     return (
       <div
         key={player.id}
-        className={`relative flex items-center justify-between rounded-lg border-2 p-3 transition-colors ${
-          isSelected ? 'ring-2 ring-offset-2 ring-blue-500' : ''
+        className={`flex items-center justify-between rounded-xl border-2 p-4 shadow-sm transition ${
+          isRecent ? 'ring-2 ring-offset-2 ring-blue-400' : ''
         }`}
         style={{
           backgroundColor: color.light,
@@ -305,29 +290,51 @@ export function Settings() {
           color: color.textOnLight
         }}
       >
-        <button
-          type="button"
-          className="flex items-center space-x-3 text-left"
-          onClick={() => openPlayerModal(player)}
-        >
-          <span className="text-3xl" aria-hidden>
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+            style={{ backgroundColor: color.bold, color: color.textOnBold }}
+            aria-hidden
+          >
             {player.avatar}
-          </span>
-          <span className="font-semibold">{player.name}</span>
-        </button>
-        {!player.isDefault && (
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => openPlayerModal(player)}
+              className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              <span className="block text-lg font-semibold">{player.name}</span>
+              <span className="block text-xs text-black/60">{STR.settings.tapToEdit}</span>
+            </button>
+            <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium">
+              <span aria-hidden>●</span> {color.label}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => handleRemovePlayer(player)}
-            className="rounded-full bg-white/60 p-2 text-sm text-red-600 transition hover:bg-white"
-            aria-label={STR.settings.removePlayer(player.name)}
+            onClick={() => openPlayerModal(player)}
+            className="rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-white"
           >
-            🗑️
+            {STR.settings.editPlayer}
           </button>
-        )}
-        {player.isDefault && (
-          <span className="text-xs font-medium text-black/60">{STR.settings.defaultLabel}</span>
-        )}
+          {!player.isDefault ? (
+            <button
+              type="button"
+              onClick={() => handleRemovePlayer(player)}
+              className="rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-white"
+              aria-label={STR.settings.removePlayer(player.name)}
+            >
+              {STR.settings.remove}
+            </button>
+          ) : (
+            <span className="rounded-full bg-white/50 px-3 py-1 text-xs font-medium text-black/60">
+              {STR.settings.defaultLabel}
+            </span>
+          )}
+        </div>
       </div>
     );
   };
@@ -401,13 +408,15 @@ export function Settings() {
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-800">{STR.settings.players}</h3>
               <button
-                onClick={() => openPlayerModal()}
+                onClick={() => addPlayerWithDefaults()}
                 className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                 disabled={maxPlayersReached}
               >
                 {STR.settings.addPlayer}
               </button>
             </div>
+
+            <p className="mb-4 text-sm text-gray-600">{STR.settings.playersHelper}</p>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {localSettings.players.map(player => renderPlayerCard(player))}
@@ -493,100 +502,126 @@ export function Settings() {
         {/* Player Identity Modal */}
         <Modal
           isOpen={isPlayerModalOpen}
-          onClose={() => setIsPlayerModalOpen(false)}
+          onClose={closePlayerModal}
           title={STR.settings.playerModalTitle}
         >
-          <div className="space-y-6">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="player-name-input">
-                {STR.settings.playerNameLabel}
-              </label>
-              <input
-                id="player-name-input"
-                type="text"
-                value={playerDraft.name}
-                onChange={(event) => handleNameChange(event.target.value)}
-                placeholder={STR.settings.playerNamePlaceholder}
-                className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  nameError ? 'border-red-400 focus:ring-red-500' : 'border-gray-300'
-                }`}
-              />
-              {nameError && (
-                <p className="mt-1 text-sm text-red-600">{nameError}</p>
-              )}
-              {!nameError && (
-                <p className="mt-1 text-xs text-gray-500">{STR.settings.playerNameHint}</p>
-              )}
-            </div>
-
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">{STR.settings.avatarLabel}</p>
-              <div className="grid grid-cols-5 gap-2">
-                {PLAYER_AVATARS.map((avatar) => {
-                  const isSelected = playerDraft.avatar === avatar;
-                  return (
-                    <button
-                      key={avatar}
-                      type="button"
-                      onClick={() => handleAvatarSelect(avatar)}
-                      className={`flex h-14 items-center justify-center rounded-lg border text-2xl transition ${
-                        isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' : 'border-gray-200 bg-white hover:border-blue-300'
-                      }`}
-                    >
-                      {avatar}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">{STR.settings.colorLabel}</p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {PLAYER_COLORS.map((color) => {
-                  const isSelected = playerDraft.colorId === color.id;
-                  return (
-                    <button
-                      key={color.id}
-                      type="button"
-                      onClick={() => handleColorSelect(color.id)}
-                      className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm font-medium transition ${
-                        isSelected ? 'ring-2 ring-blue-400' : ''
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? color.bold : color.light,
-                        borderColor: color.bold,
-                        color: isSelected ? color.textOnBold : color.textOnLight
-                      }}
-                    >
-                      <span>{color.label}</span>
-                      <span className="text-lg" aria-hidden>
-                        ●
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handlePlayerSubmit}
-                className="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-                disabled={maxPlayersReached && !playerDraft.id}
+          {playerDraft && playerDraftColor && (
+            <div className="space-y-6">
+              <div
+                className="flex items-center justify-between rounded-xl border-2 p-4 shadow-sm"
+                style={{
+                  backgroundColor: playerDraftColor.light,
+                  borderColor: playerDraftColor.bold,
+                  color: playerDraftColor.textOnLight
+                }}
               >
-                {playerDraft.id ? STR.settings.savePlayer : STR.settings.addPlayer}
-              </button>
-            </div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+                    style={{
+                      backgroundColor: playerDraftColor.bold,
+                      color: playerDraftColor.textOnBold
+                    }}
+                    aria-hidden
+                  >
+                    {playerDraft.avatar}
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold">
+                      {playerDraft.name.trim() || STR.settings.playerPreviewPlaceholder}
+                    </p>
+                    <p className="text-xs text-black/60">
+                      {playerDraftColor.label} {STR.settings.paletteLabel}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="border-t pt-4">
-              <p className="mb-3 text-sm font-medium text-gray-700">{STR.settings.currentPlayers}</p>
-              <div className="space-y-3">
-                {[...localSettings.players].slice().reverse().map(player => renderPlayerCard(player))}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="player-name-input">
+                  {STR.settings.playerNameLabel}
+                </label>
+                <input
+                  id="player-name-input"
+                  type="text"
+                  value={playerDraft.name}
+                  onChange={(event) => handleNameChange(event.target.value)}
+                  placeholder={STR.settings.playerNamePlaceholder}
+                  className={`w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    nameError ? 'border-red-400 focus:ring-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {nameError && (
+                  <p className="mt-1 text-sm text-red-600">{nameError}</p>
+                )}
+                {!nameError && (
+                  <p className="mt-1 text-xs text-gray-500">{STR.settings.playerNameHint}</p>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-700">{STR.settings.avatarLabel}</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {PLAYER_AVATARS.map((avatar) => {
+                    const isSelected = playerDraft.avatar === avatar;
+                    return (
+                      <button
+                        key={avatar}
+                        type="button"
+                        onClick={() => handleAvatarSelect(avatar)}
+                        className={`flex h-14 items-center justify-center rounded-lg border text-2xl transition ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300'
+                            : 'border-gray-200 bg-white hover:border-blue-300'
+                        }`}
+                      >
+                        {avatar}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-medium text-gray-700">{STR.settings.colorLabel}</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {PLAYER_COLORS.map((color) => {
+                    const isSelected = playerDraft.colorId === color.id;
+                    return (
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => handleColorSelect(color.id)}
+                        className={`flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm font-medium transition ${
+                          isSelected ? 'ring-2 ring-blue-400' : ''
+                        }`}
+                        style={{
+                          backgroundColor: isSelected ? color.bold : color.light,
+                          borderColor: color.bold,
+                          color: isSelected ? color.textOnBold : color.textOnLight
+                        }}
+                      >
+                        <span>{color.label}</span>
+                        <span className="text-lg" aria-hidden>
+                          ●
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handlePlayerSubmit}
+                  className="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700"
+                >
+                  {STR.settings.savePlayer}
+                </button>
               </div>
             </div>
-          </div>
+          )}
         </Modal>
       </div>
     </div>

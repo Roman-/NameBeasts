@@ -91,7 +91,7 @@ export function Layout() {
           <button
             type="button"
             onClick={handleShowNav}
-            className="fixed top-0 left-1/2 -translate-x-1/2 bg-white text-gray-700 shadow rounded-b-full px-5 py-1.5 text-sm z-30"
+            className="fixed top-3 right-4 z-30 flex items-center gap-2 rounded-full bg-white/95 px-4 py-1.5 text-sm font-medium text-gray-700 shadow hover:bg-white"
             aria-label="Show navigation"
           >
             Menu

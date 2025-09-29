@@ -106,15 +106,24 @@ export function Play() {
     return <div>Loading...</div>;
   }
 
-  const progress = state.deck ? `${Math.max(0, state.currentIndex)} of ${state.deck.length}` : '';
+  const totalCards = state.deck?.length ?? 0;
+  const currentCardNumber =
+    !state.deck || isFirstDraw
+      ? 0
+      : Math.min(state.currentIndex + 1, totalCards);
+
+  const progressLabel =
+    totalCards === 0
+      ? STR.play.noCards
+      : isFirstDraw
+        ? STR.play.ready(totalCards)
+        : STR.play.progress(currentCardNumber, totalCards);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto">
         {/* Progress */}
-        <div className="text-center text-sm text-gray-600 mb-4">
-          Card {progress}
-        </div>
+        <div className="text-center text-sm font-medium text-gray-600 mb-4">{progressLabel}</div>
 
         {/* Hint */}
         {currentCard && (

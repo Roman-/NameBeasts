@@ -9,13 +9,14 @@ export const STR = {
     duplicatesPerCreature: 'Copies of each creature',
     totalCards: 'Total cards',
     players: 'Players',
-    addPlayer: 'Add player',
+    addPlayer: 'Quick add player',
+    playersHelper: 'We pre-filled names, avatars, and colors. Tap a card to personalize.',
     pastPlayers: 'Past players',
     chooseStyle: 'Choose style',
     useThisStyle: 'Use this style',
     resetDefaults: 'Reset to defaults',
     start: 'Start!',
-    playerModalTitle: 'Player identity',
+    playerModalTitle: 'Edit player identity',
     playerNameLabel: 'Player name',
     avatarLabel: 'Choose an avatar',
     colorLabel: 'Choose a color palette',
@@ -25,9 +26,14 @@ export const STR = {
     playerNameDuplicate: 'That name is already in use.',
     defaultLabel: 'Default',
     maxPlayersNote: 'Maximum of 8 players reached.',
-    playerNameHint: 'Tap a card below to edit it, or add a new one.',
+    playerNameHint: 'Names must be unique. Keep it short and memorable.',
     playerNamePlaceholder: 'Player name',
-    removePlayer: (name: string) => `Remove ${name}`
+    removePlayer: (name: string) => `Remove ${name}`,
+    tapToEdit: 'Tap to rename or change avatar',
+    editPlayer: 'Edit',
+    remove: 'Remove',
+    paletteLabel: 'palette',
+    playerPreviewPlaceholder: 'Player name'
   },
   play: {
     startRound: 'Start Round',
@@ -36,10 +42,13 @@ export const STR = {
     next: 'Next',
     undo: 'Undo last',
     progress: (i: number, total: number) => `Card ${i} of ${total}`,
+    ready: (total: number) => `Ready · ${total} card${total === 1 ? '' : 's'}`,
     noCards: 'No cards'
   },
   finish: {
     title: 'Scores',
-    playAgain: 'Play again'
+    playAgain: 'Play again',
+    topScore: 'Top score',
+    topScoreTie: 'Top score (tie)'
   }
 };
