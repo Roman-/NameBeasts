@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useGameContext } from '../state/GameContext';
 import { CardFrame } from '../components/CardFrame/CardFrame';
@@ -44,7 +44,35 @@ export function Play() {
 
   const currentCard = state.currentIndex >= 0 ? state.deck?.[state.currentIndex] : undefined;
   const isFirstDraw = state.currentIndex === -1;
-  const canUndo = state.rounds && state.rounds.length > 0;
+  const rounds = state.rounds ?? [];
+  const canUndo = rounds.length > 0;
+
+  const players = state.settings?.players ?? [];
+
+  const playerScores = useMemo(() => {
+    const scores: Record<string, number> = {};
+    players.forEach((player) => {
+      scores[player.id] = 0;
+    });
+
+    let noOne = 0;
+
+    rounds.forEach((round) => {
+      if (round.winnerPlayerId === null) {
+        noOne += 1;
+      } else if (round.winnerPlayerId) {
+        scores[round.winnerPlayerId] = (scores[round.winnerPlayerId] ?? 0) + 1;
+      }
+    });
+
+    return { scores, noOne };
+  }, [players, rounds]);
+
+  const currentTurnPlayer = useMemo(() => {
+    if (!players || players.length === 0) return undefined;
+    const index = rounds.length % players.length;
+    return players[index];
+  }, [players, rounds.length]);
 
   const handlePlayerSelect = (playerId: string | null) => {
     dispatch({ type: 'SET_PENDING_WINNER', playerId });
@@ -134,7 +162,8 @@ export function Play() {
 
         {/* Card */}
         <div className="mb-6">
-          <CardFrame 
+          <CardFrame
+            key={currentCard ? currentCard.uid : 'placeholder-card'}
             card={currentCard}
             animationClass={animationClass}
             onAnimationEnd={handleAnimationEnd}
@@ -143,11 +172,21 @@ export function Play() {
 
         {/* Player Selection */}
         {!isFirstDraw && (
-          <PlayerChips
-            players={state.settings.players}
-            selectedPlayerId={state.pendingWinner}
-            onPlayerSelect={handlePlayerSelect}
-          />
+          <>
+            {currentTurnPlayer && (
+              <div className="text-center text-sm font-semibold text-gray-600 mb-2" aria-live="polite">
+                {STR.play.turnLabel(currentTurnPlayer.name)}
+              </div>
+            )}
+            <PlayerChips
+              players={players}
+              selectedPlayerId={state.pendingWinner}
+              onPlayerSelect={handlePlayerSelect}
+              scores={playerScores.scores}
+              noOneScore={playerScores.noOne}
+              currentTurnPlayerId={currentTurnPlayer?.id}
+            />
+          </>
         )}
 
         {/* Controls */}
