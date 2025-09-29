@@ -44,7 +44,16 @@ export const STR = {
     undo: 'Undo last',
     progress: (i: number, total: number) => `Card ${i} of ${total}`,
     ready: (total: number) => `Ready · ${total} card${total === 1 ? '' : 's'}`,
-    noCards: 'No cards'
+    noCards: 'No cards',
+    points: (value: number) => `${value} point${value === 1 ? '' : 's'}`,
+    playerAria: (name: string, score: number) =>
+      `${name}. ${score === 0 ? '0 points so far' : `${score} point${score === 1 ? '' : 's'}`}`,
+    noOneAria: (score: number) =>
+      score === 0
+        ? 'No one. 0 points so far'
+        : `No one. ${score} point${score === 1 ? '' : 's'}`,
+    turnBadge: 'TURN',
+    turnLabel: (name: string) => `It's ${name}'s turn`
   },
   finish: {
     title: 'Scores',
