@@ -8,6 +8,7 @@ A children-friendly React web app where players invent and recall names for recu
 - **Fruitfolk art style** with 8 creature images
 - **Customizable deck** with 2-8 distinct creatures, each duplicated 1-12 times
 - **Smooth animations** with animate.css
+- **Installable Progressive Web App** experience with offline caching
 - **Local storage persistence** for settings, players, and game state
 - **Resume functionality** if the tab refreshes mid-game
 - **Accessible** with keyboard navigation and screen reader support
@@ -37,6 +38,19 @@ A children-friendly React web app where players invent and recall names for recu
    ```bash
    npm run build
    ```
+
+### Deploying to a sub-directory
+
+The build output is configured for relative asset URLs so it can be hosted from a
+sub-directory such as `https://example.com/name_beasts/`. If your hosting setup
+requires a fixed base path, set `VITE_APP_BASE_PATH` before building:
+
+```bash
+VITE_APP_BASE_PATH=/name_beasts npm run build
+```
+
+The same environment variable is read at runtime to ensure React Router uses the
+correct basename and the service worker registers with the right scope.
 
 ## Game Rules
 
