@@ -8,7 +8,13 @@ export type Settings = {
   players: Player[];
 };
 
-export type Player = { id: string; name: string };
+export type Player = {
+  id: string;
+  name: string;
+  avatar: string;
+  colorId: string;
+  isDefault?: boolean;
+};
 
 export type Card = {
   uid: string;                          // unique per deck card

@@ -2,6 +2,10 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGameContext } from '../state/GameContext';
 import { STR } from '../strings';
+import { PLAYER_COLOR_MAP, PLAYER_COLORS, PlayerColorId } from '../data/playerIdentity';
+
+const getColorForPlayer = (playerColorId: string) =>
+  PLAYER_COLOR_MAP[playerColorId as PlayerColorId] ?? PLAYER_COLORS[0];
 
 export function Finish() {
   const navigate = useNavigate();
@@ -49,33 +53,42 @@ export function Finish() {
               const score = scores[player.id] || 0;
               const isWinner = index === 0 && score > 0;
               
+              const color = getColorForPlayer(player.colorId);
+
               return (
-                <div 
+                <div
                   key={player.id}
-                  className={`flex justify-between items-center p-4 rounded-lg ${
-                    isWinner ? 'bg-yellow-50 border-2 border-yellow-200' : 'bg-gray-50'
+                  className={`flex items-center justify-between rounded-xl border-2 p-4 shadow-sm ${
+                    isWinner ? 'ring-2 ring-yellow-300' : ''
                   }`}
+                  style={{
+                    backgroundColor: color.light,
+                    borderColor: color.bold,
+                    color: color.textOnLight
+                  }}
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className={`text-2xl font-bold ${
-                      isWinner ? 'text-yellow-600' : 'text-gray-400'
-                    }`}>
-                      #{index + 1}
-                    </span>
-                    <span className={`text-lg font-medium ${
-                      isWinner ? 'text-yellow-800' : 'text-gray-800'
-                    }`}>
-                      {player.name}
-                    </span>
-                    {isWinner && (
-                      <span className="text-2xl">🏆</span>
-                    )}
+                  <div className="flex items-center space-x-4">
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+                      style={{
+                        backgroundColor: color.bold,
+                        color: color.textOnBold
+                      }}
+                      aria-hidden
+                    >
+                      {player.avatar}
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold">{player.name}</p>
+                      <p className="text-sm text-black/60">#{index + 1}</p>
+                    </div>
                   </div>
-                  <span className={`text-2xl font-bold ${
-                    isWinner ? 'text-yellow-600' : 'text-gray-600'
-                  }`}>
-                    {score}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    {isWinner && <span className="text-2xl" aria-label="Top score">🏆</span>}
+                    <span className="text-2xl font-bold" style={{ color: color.textOnLight }}>
+                      {score}
+                    </span>
+                  </div>
                 </div>
               );
             })}

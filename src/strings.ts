@@ -14,7 +14,20 @@ export const STR = {
     chooseStyle: 'Choose style',
     useThisStyle: 'Use this style',
     resetDefaults: 'Reset to defaults',
-    start: 'Start!'
+    start: 'Start!',
+    playerModalTitle: 'Player identity',
+    playerNameLabel: 'Player name',
+    avatarLabel: 'Choose an avatar',
+    colorLabel: 'Choose a color palette',
+    currentPlayers: 'Current players',
+    savePlayer: 'Save changes',
+    playerNameRequired: 'Give them a name before continuing.',
+    playerNameDuplicate: 'That name is already in use.',
+    defaultLabel: 'Default',
+    maxPlayersNote: 'Maximum of 8 players reached.',
+    playerNameHint: 'Tap a card below to edit it, or add a new one.',
+    playerNamePlaceholder: 'Player name',
+    removePlayer: (name: string) => `Remove ${name}`
   },
   play: {
     startRound: 'Start Round',

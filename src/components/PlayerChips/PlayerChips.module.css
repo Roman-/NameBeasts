@@ -8,51 +8,56 @@
 
 .chip {
   padding: 0.5rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid transparent;
   border-radius: 9999px;
-  background: white;
-  color: #374151;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 80px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 110px;
 }
 
 .chip:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
 .chip:focus {
   outline: none;
-  ring: 2px;
-  ring-color: #3b82f6;
-  ring-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
 }
 
 .selected {
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: white;
-}
-
-.selected:hover {
-  background: #2563eb;
-  border-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
 .noOne {
   border-color: #6b7280;
   color: #6b7280;
+  background: #f9fafb;
 }
 
 .noOne:hover {
   border-color: #4b5563;
-  background: #f3f4f6;
+  background: #e5e7eb;
 }
 
 .noOne.selected {
   border-color: #6b7280;
   background: #6b7280;
   color: white;
+  box-shadow: none;
+}
+
+.avatar {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.name {
+  font-weight: 600;
+  line-height: 1.2;
 }
