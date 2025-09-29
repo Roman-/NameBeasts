@@ -1,0 +1,58 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.chip {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 9999px;
+  background: white;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.chip:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.chip:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  ring-offset: 2px;
+}
+
+.selected {
+  border-color: #3b82f6;
+  background: #3b82f6;
+  color: white;
+}
+
+.selected:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.noOne {
+  border-color: #6b7280;
+  color: #6b7280;
+}
+
+.noOne:hover {
+  border-color: #4b5563;
+  background: #f3f4f6;
+}
+
+.noOne.selected {
+  border-color: #6b7280;
+  background: #6b7280;
+  color: white;
+}
