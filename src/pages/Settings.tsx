@@ -78,10 +78,19 @@ export function Settings() {
   const [playerDraft, setPlayerDraft] = useState<PlayerDraft | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [lastAddedPlayerId, setLastAddedPlayerId] = useState<string | null>(null);
+  const [areStyleImagesLoaded, setAreStyleImagesLoaded] = useState(false);
 
   const playerDraftColor = playerDraft
     ? PLAYER_COLOR_MAP[playerDraft.colorId as PlayerColorId] ?? PLAYER_COLORS[0]
     : null;
+
+  const currentStyle = STYLES[localSettings.style];
+
+  const styleImageUrls = useMemo(() => {
+    return Array.from({ length: currentStyle.imageCount }, (_, index) =>
+      `${currentStyle.publicPath}/${index + 1}.jpg`
+    );
+  }, [currentStyle]);
 
   useEffect(() => {
     setLocalSettings(normalizedSettings);
@@ -103,6 +112,51 @@ export function Settings() {
     const timeout = window.setTimeout(() => setLastAddedPlayerId(null), 2000);
     return () => window.clearTimeout(timeout);
   }, [lastAddedPlayerId]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const totalImages = styleImageUrls.length;
+
+    if (totalImages === 0) {
+      setAreStyleImagesLoaded(true);
+      return;
+    }
+
+    setAreStyleImagesLoaded(false);
+    let loadedCount = 0;
+
+    const handleLoad = () => {
+      loadedCount += 1;
+      if (!isCancelled && loadedCount >= totalImages) {
+        setAreStyleImagesLoaded(true);
+      }
+    };
+
+    const preloaders = styleImageUrls.map(src => {
+      const image = new Image();
+      let hasSettled = false;
+      const settle = () => {
+        if (hasSettled) return;
+        hasSettled = true;
+        handleLoad();
+      };
+      image.onload = settle;
+      image.onerror = settle;
+      image.src = src;
+      if (image.complete) {
+        settle();
+      }
+      return image;
+    });
+
+    return () => {
+      isCancelled = true;
+      preloaders.forEach(image => {
+        image.onload = null;
+        image.onerror = null;
+      });
+    };
+  }, [styleImageUrls]);
 
   const totalCards = localSettings.distinctCreatures * localSettings.duplicatesPerCreature;
   const isLargeDeck = totalCards > 200;
@@ -347,43 +401,54 @@ export function Settings() {
         <div className="space-y-6">
           {/* Creatures Settings */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+            <h3 className="mb-4 text-lg font-medium text-gray-800">
+              {STR.settings.creaturesPanelTitle}
+            </h3>
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <span className="text-sm font-medium text-gray-700">
                   {STR.settings.distinctCreatures}
-                </label>
-                <div className="flex items-center space-x-2">
+                </span>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => updateDistinctCreatures(localSettings.distinctCreatures - 1)}
                     className="h-8 w-8 rounded bg-gray-200 hover:bg-gray-300"
+                    aria-label={`Decrease ${STR.settings.distinctCreatures.toLowerCase()}`}
                   >
                     -
                   </button>
-                  <span className="w-12 text-center">{localSettings.distinctCreatures}</span>
+                  <span className="w-12 text-center text-base font-semibold">
+                    {localSettings.distinctCreatures}
+                  </span>
                   <button
                     onClick={() => updateDistinctCreatures(localSettings.distinctCreatures + 1)}
                     className="h-8 w-8 rounded bg-gray-200 hover:bg-gray-300"
+                    aria-label={`Increase ${STR.settings.distinctCreatures.toLowerCase()}`}
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <span className="text-sm font-medium text-gray-700">
                   {STR.settings.duplicatesPerCreature}
-                </label>
-                <div className="flex items-center space-x-2">
+                </span>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => updateDuplicates(localSettings.duplicatesPerCreature - 1)}
                     className="h-8 w-8 rounded bg-gray-200 hover:bg-gray-300"
+                    aria-label={`Decrease ${STR.settings.duplicatesPerCreature.toLowerCase()}`}
                   >
                     -
                   </button>
-                  <span className="w-12 text-center">{localSettings.duplicatesPerCreature}</span>
+                  <span className="w-12 text-center text-base font-semibold">
+                    {localSettings.duplicatesPerCreature}
+                  </span>
                   <button
                     onClick={() => updateDuplicates(localSettings.duplicatesPerCreature + 1)}
                     className="h-8 w-8 rounded bg-gray-200 hover:bg-gray-300"
+                    aria-label={`Increase ${STR.settings.duplicatesPerCreature.toLowerCase()}`}
                   >
                     +
                   </button>
@@ -416,8 +481,6 @@ export function Settings() {
               </button>
             </div>
 
-            <p className="mb-4 text-sm text-gray-600">{STR.settings.playersHelper}</p>
-
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {localSettings.players.map(player => renderPlayerCard(player))}
             </div>
@@ -448,21 +511,30 @@ export function Settings() {
           {/* Style Selection */}
           <div className="rounded-lg bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-medium text-gray-800">Style</h3>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <img
-                  src={STYLES[localSettings.style].preview}
-                  alt={STYLES[localSettings.style].label}
-                  className="h-16 w-16 rounded-lg border-2 border-blue-500 object-cover"
-                />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="flex -space-x-6">
+                  {styleImageUrls.map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`${currentStyle.label} creature ${index + 1}`}
+                      loading="eager"
+                      className="h-24 w-16 rounded-xl border-2 border-white object-cover shadow-md ring-1 ring-blue-100"
+                    />
+                  ))}
+                </div>
                 <div>
-                  <p className="font-medium">{STYLES[localSettings.style].label}</p>
-                  <p className="text-sm text-gray-600">{STYLES[localSettings.style].imageCount} creatures</p>
+                  <p className="font-medium">{currentStyle.label}</p>
+                  <p className="text-sm text-gray-600">{currentStyle.imageCount} creatures</p>
+                  {!areStyleImagesLoaded && (
+                    <p className="mt-1 text-xs text-blue-600">Loading creatures…</p>
+                  )}
                 </div>
               </div>
               <button
                 onClick={() => setIsStyleModalOpen(true)}
-                className="rounded bg-blue-100 px-4 py-2 text-blue-700 hover:bg-blue-200"
+                className="self-start rounded bg-blue-100 px-4 py-2 text-blue-700 transition hover:bg-blue-200"
               >
                 {STR.settings.chooseStyle}
               </button>
@@ -479,7 +551,8 @@ export function Settings() {
             </button>
             <button
               onClick={startGame}
-              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+              className="flex-1 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-200 disabled:text-blue-900/60 disabled:hover:bg-blue-200"
+              disabled={!areStyleImagesLoaded}
             >
               {STR.settings.start}
             </button>
