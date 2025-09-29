@@ -296,7 +296,11 @@ export function Settings() {
   const startGame = () => {
     // Build deck
     const cards: Card[] = [];
-    for (let creatureId = 1; creatureId <= localSettings.distinctCreatures; creatureId++) {
+    const styleMeta = STYLES[localSettings.style];
+    const availableCreatureIds = Array.from({ length: styleMeta.imageCount }, (_, index) => index + 1);
+    const selectedCreatureIds = shuffle([...availableCreatureIds]).slice(0, localSettings.distinctCreatures);
+
+    selectedCreatureIds.forEach((creatureId) => {
       for (let d = 0; d < localSettings.duplicatesPerCreature; d++) {
         cards.push({
           uid: generateUid(),
@@ -304,7 +308,7 @@ export function Settings() {
           style: localSettings.style
         });
       }
-    }
+    });
 
     const shuffledDeck = shuffle(cards);
 

@@ -7,10 +7,11 @@ import styles from './CardFrame.module.css';
 interface CardFrameProps {
   card?: Card;
   animationClass?: string;
+  hidden?: boolean;
   onAnimationEnd?: () => void;
 }
 
-export function CardFrame({ card, animationClass, onAnimationEnd }: CardFrameProps) {
+export function CardFrame({ card, animationClass, hidden, onAnimationEnd }: CardFrameProps) {
   if (!card) {
     return (
       <div className={styles.cardFrame}>
@@ -24,9 +25,17 @@ export function CardFrame({ card, animationClass, onAnimationEnd }: CardFramePro
   const style = STYLES[card.style];
   const imageSrc = `${style.publicPath}/${card.creatureId}.jpg`;
 
+  const classes = [styles.cardFrame, 'animate__animated'];
+  if (animationClass) {
+    classes.push(animationClass);
+  }
+  if (hidden) {
+    classes.push(styles.hidden);
+  }
+
   return (
-    <div className={`${styles.cardFrame} animate__animated ${animationClass || ''}`} onAnimationEnd={onAnimationEnd}>
-      <img 
+    <div className={classes.join(' ')} onAnimationEnd={onAnimationEnd}>
+      <img
         src={imageSrc}
         alt={`Creature ${card.creatureId}`}
         className={styles.image}

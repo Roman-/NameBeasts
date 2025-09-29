@@ -14,6 +14,7 @@ export function Play() {
   const { setActions } = useNavbar();
   const [animationClass, setAnimationClass] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isCardHidden, setIsCardHidden] = useState(false);
 
   // Initialize game from location state or localStorage
   useEffect(() => {
@@ -62,16 +63,28 @@ export function Play() {
     if (state.pendingWinner === undefined) return;
 
     setIsAnimating(true);
+    setIsCardHidden(false);
     setAnimationClass('animate__fadeOut');
   };
 
   const handleAnimationEnd = () => {
     if (animationClass === 'animate__fadeOut') {
+      setIsCardHidden(true);
       dispatch({ type: 'COMMIT_ROUND' });
-      setAnimationClass('animate__zoomIn');
+      const startZoomIn = () => {
+        setAnimationClass('animate__zoomIn');
+        setIsCardHidden(false);
+      };
+
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(startZoomIn);
+      } else {
+        setTimeout(startZoomIn, 0);
+      }
     } else if (animationClass === 'animate__zoomIn') {
       setAnimationClass('');
       setIsAnimating(false);
+      setIsCardHidden(false);
     }
   };
 
@@ -134,9 +147,10 @@ export function Play() {
 
         {/* Card */}
         <div className="mb-6">
-          <CardFrame 
+          <CardFrame
             card={currentCard}
             animationClass={animationClass}
+            hidden={isCardHidden}
             onAnimationEnd={handleAnimationEnd}
           />
         </div>
