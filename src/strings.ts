@@ -22,16 +22,11 @@ export const STR = {
     noOne: 'No one',
     next: 'Next',
     undo: 'Undo last',
-    revealName: 'Reveal name',
-    saveAName: 'Save a name?',
-    save: 'Save',
-    skip: 'Skip',
     progress: (i: number, total: number) => `Card ${i} of ${total}`,
     noCards: 'No cards'
   },
   finish: {
     title: 'Scores',
-    playAgain: 'Play again',
-    reviewNames: 'Review names'
+    playAgain: 'Play again'
   }
 };

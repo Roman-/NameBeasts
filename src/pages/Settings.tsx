@@ -114,7 +114,6 @@ export function Settings() {
       deck: shuffledDeck,
       currentIndex: -1,
       rounds: [],
-      names: [],
       status: 'ready'
     };
 

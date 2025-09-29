@@ -24,19 +24,11 @@ export type Round = {
   at: number;                           // timestamp
 };
 
-export type CreatureName = {
-  style: StyleId;
-  creatureId: number;
-  text: string;                         // invented name
-  firstNamedAt: number;
-};
-
 export type Game = {
   id: string;                           // e.g., nanoid
   settings: Settings;
   deck: Card[];                         // shuffled
   currentIndex: number;                 // -1 before first draw
   rounds: Round[];                      // made choices
-  names: CreatureName[];                // optional saved names
   status: 'ready' | 'playing' | 'finished';
 };

@@ -86,31 +86,9 @@ export function Finish() {
           </div>
         </div>
 
-        {/* Saved Names */}
-        {state.names && state.names.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Creature Names</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {state.names.map((name) => (
-                <div key={`${name.style}-${name.creatureId}`} className="flex items-center space-x-3">
-                  <img 
-                    src={`/creatures/${name.style}/${name.creatureId}.jpg`}
-                    alt={`Creature ${name.creatureId}`}
-                    className="w-12 h-12 object-cover rounded border"
-                  />
-                  <div>
-                    <p className="font-medium">"{name.text}"</p>
-                    <p className="text-sm text-gray-600">Creature #{name.creatureId}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link 
+          <Link
             to="/settings"
             className="flex-1 px-6 py-3 bg-blue-600 text-white text-center rounded-lg font-medium hover:bg-blue-700"
           >

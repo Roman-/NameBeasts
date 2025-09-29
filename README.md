@@ -7,7 +7,6 @@ A children-friendly React web app where players invent and recall names for recu
 - **Landing → Settings → Game → Finish flow** using React Router
 - **Fruitfolk art style** with 8 creature images
 - **Customizable deck** with 2-8 distinct creatures, each duplicated 1-12 times
-- **Name Tracker** to record and reveal creature names
 - **Smooth animations** with animate.css
 - **Local storage persistence** for settings, players, and game state
 - **Resume functionality** if the tab refreshes mid-game
@@ -73,9 +72,3 @@ src/
 - `nb:v1:settings` - Last used game settings
 - `nb:v1:pastPlayers` - Previously used player names
 - `nb:v1:resumeGame` - Current game state (cleared on finish)
-
-## Keyboard Shortcuts (Play Screen)
-
-- **1-9**: Select player 1-9
-- **0**: Select "No one"
-- **Enter**: Proceed to next card

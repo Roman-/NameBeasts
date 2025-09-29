@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useGameContext } from '../state/GameContext';
 import { CardFrame } from '../components/CardFrame/CardFrame';
 import { PlayerChips } from '../components/PlayerChips/PlayerChips';
-import { NameTracker } from '../components/NameTracker/NameTracker';
 import { STR } from '../strings';
 import { Game } from '../types';
 
@@ -44,20 +43,21 @@ export function Play() {
   const currentCard = state.currentIndex >= 0 ? state.deck?.[state.currentIndex] : undefined;
   const isFirstDraw = state.currentIndex === -1;
   const canUndo = state.rounds && state.rounds.length > 0;
-  const canProceed = isFirstDraw || state.pendingWinner !== undefined;
 
   const handlePlayerSelect = (playerId: string | null) => {
     dispatch({ type: 'SET_PENDING_WINNER', playerId });
   };
 
   const handleNext = () => {
+    if (isAnimating) return;
+
     if (isFirstDraw) {
       dispatch({ type: 'START_FIRST_CARD' });
       setAnimationClass('animate__zoomIn');
       return;
     }
 
-    if (!canProceed) return;
+    if (state.pendingWinner === undefined) return;
 
     setIsAnimating(true);
     setAnimationClass('animate__fadeOut');
@@ -78,31 +78,6 @@ export function Play() {
     dispatch({ type: 'UNDO_LAST' });
     setAnimationClass('animate__zoomIn');
   };
-
-  const handleSaveName = (creatureId: number, text: string) => {
-    dispatch({ type: 'SAVE_CREATURE_NAME', creatureId, text });
-  };
-
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (isAnimating) return;
-
-      const key = e.key;
-      if (key >= '1' && key <= '9') {
-        const playerIndex = parseInt(key) - 1;
-        if (state.settings?.players && playerIndex < state.settings.players.length) {
-          handlePlayerSelect(state.settings.players[playerIndex].id);
-        }
-      } else if (key === '0') {
-        handlePlayerSelect(null);
-      } else if (key === 'Enter' && canProceed) {
-        handleNext();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyPress);
-    return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [isAnimating, canProceed, state.settings?.players, handlePlayerSelect, handleNext]);
 
   if (!state.settings) {
     return <div>Loading...</div>;
@@ -134,16 +109,6 @@ export function Play() {
           />
         </div>
 
-        {/* Name Tracker */}
-        {currentCard && (
-          <NameTracker
-            creatureId={currentCard.creatureId}
-            style={currentCard.style}
-            existingNames={state.names || []}
-            onSaveName={handleSaveName}
-          />
-        )}
-
         {/* Player Selection */}
         {!isFirstDraw && (
           <PlayerChips
@@ -164,19 +129,26 @@ export function Play() {
               {STR.play.undo}
             </button>
           )}
-          
-          <button
-            onClick={handleNext}
-            disabled={!canProceed || isAnimating}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {isFirstDraw ? STR.play.startRound : STR.play.next}
-          </button>
-        </div>
 
-        {/* Keyboard hints */}
-        <div className="mt-8 text-center text-xs text-gray-500">
-          <p>Keyboard: 1-9 for players, 0 for "No one", Enter to proceed</p>
+          {isFirstDraw ? (
+            <button
+              onClick={handleNext}
+              disabled={isAnimating}
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {STR.play.startRound}
+            </button>
+          ) : (
+            state.pendingWinner !== undefined && (
+              <button
+                onClick={handleNext}
+                disabled={isAnimating}
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {STR.play.next}
+              </button>
+            )
+          )}
         </div>
       </div>
     </div>

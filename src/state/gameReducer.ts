@@ -1,12 +1,11 @@
-import { Game, Round, CreatureName } from '../types';
+import { Game, Round } from '../types';
 
 export type GameAction =
   | { type: 'INIT_GAME'; payload: Game }
   | { type: 'START_FIRST_CARD' }
   | { type: 'SET_PENDING_WINNER'; playerId: string | null }
   | { type: 'COMMIT_ROUND' }
-  | { type: 'UNDO_LAST' }
-  | { type: 'SAVE_CREATURE_NAME'; creatureId: number; text: string };
+  | { type: 'UNDO_LAST' };
 
 export interface GameState extends Game {
   pendingWinner?: string | null;
@@ -15,7 +14,7 @@ export interface GameState extends Game {
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'INIT_GAME':
-      return { ...action.payload, pendingWinner: null };
+      return { ...action.payload, pendingWinner: undefined };
 
     case 'START_FIRST_CARD':
       if (state.currentIndex !== -1) return state;
@@ -46,7 +45,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         currentIndex: newIndex,
         rounds: [...state.rounds, newRound],
         status: isFinished ? 'finished' : 'playing',
-        pendingWinner: null
+        pendingWinner: undefined
       };
     }
 
@@ -61,33 +60,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         currentIndex: newIndex,
         rounds,
         status: 'playing',
-        pendingWinner: null
+        pendingWinner: undefined
       };
-    }
-
-    case 'SAVE_CREATURE_NAME': {
-      const existingNameIndex = state.names.findIndex(
-        n => n.creatureId === action.creatureId && n.style === state.settings.style
-      );
-
-      let newNames: CreatureName[];
-      if (existingNameIndex >= 0) {
-        newNames = [...state.names];
-        newNames[existingNameIndex] = {
-          ...newNames[existingNameIndex],
-          text: action.text
-        };
-      } else {
-        const newName: CreatureName = {
-          style: state.settings.style,
-          creatureId: action.creatureId,
-          text: action.text,
-          firstNamedAt: Date.now()
-        };
-        newNames = [...state.names, newName];
-      }
-
-      return { ...state, names: newNames };
     }
 
     default:
