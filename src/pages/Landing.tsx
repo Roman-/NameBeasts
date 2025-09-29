@@ -9,7 +9,6 @@ export function Landing() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-blue-50 to-green-50">
       <div className="text-center max-w-md">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">{STR.appName}</h1>
         <p className="text-lg text-gray-600 mb-8">{STR.landingBlurb}</p>
         
         <div className="space-y-4">

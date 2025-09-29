@@ -6,6 +6,7 @@ import { Play } from '../pages/Play';
 import { Finish } from '../pages/Finish';
 import { GameProvider } from '../state/GameContext';
 import { getBasePath } from '../utils/basePath';
+import { Layout } from './Layout';
 
 const basePath = getBasePath();
 const basename = basePath === '/' ? '/' : basePath.replace(/\/$/, '');
@@ -19,27 +20,33 @@ export const router = createBrowserRouter(
   [
     {
       path: '/',
-      element: <Landing />,
-    },
-    {
-      path: '/settings',
-      element: <Settings />,
-    },
-    {
-      path: '/play',
-      element: (
-        <GameRouteWrapper>
-          <Play />
-        </GameRouteWrapper>
-      ),
-    },
-    {
-      path: '/finish',
-      element: (
-        <GameRouteWrapper>
-          <Finish />
-        </GameRouteWrapper>
-      ),
+      element: <Layout />,
+      children: [
+        {
+          index: true,
+          element: <Landing />,
+        },
+        {
+          path: 'settings',
+          element: <Settings />,
+        },
+        {
+          path: 'play',
+          element: (
+            <GameRouteWrapper>
+              <Play />
+            </GameRouteWrapper>
+          ),
+        },
+        {
+          path: 'finish',
+          element: (
+            <GameRouteWrapper>
+              <Finish />
+            </GameRouteWrapper>
+          ),
+        },
+      ],
     },
   ],
   {

@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useGameContext } from '../state/GameContext';
 import { CardFrame } from '../components/CardFrame/CardFrame';
 import { PlayerChips } from '../components/PlayerChips/PlayerChips';
 import { STR } from '../strings';
 import { Game } from '../types';
+import { useNavbar } from '../state/NavbarContext';
 
 export function Play() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state, dispatch } = useGameContext();
+  const { setActions } = useNavbar();
   const [animationClass, setAnimationClass] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -73,11 +75,32 @@ export function Play() {
     }
   };
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (!canUndo) return;
     dispatch({ type: 'UNDO_LAST' });
     setAnimationClass('animate__zoomIn');
-  };
+  }, [canUndo, dispatch]);
+
+  useEffect(() => {
+    if (!canUndo) {
+      setActions(null);
+      return () => setActions(null);
+    }
+
+    const undoButton = (
+      <button
+        onClick={handleUndo}
+        className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:text-gray-300"
+        disabled={isAnimating}
+      >
+        {STR.play.undo}
+      </button>
+    );
+
+    setActions(undoButton);
+
+    return () => setActions(null);
+  }, [canUndo, handleUndo, isAnimating, setActions]);
 
   if (!state.settings) {
     return <div>Loading...</div>;
@@ -120,16 +143,6 @@ export function Play() {
 
         {/* Controls */}
         <div className="flex justify-center space-x-4 mt-6">
-          {canUndo && (
-            <button
-              onClick={handleUndo}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              disabled={isAnimating}
-            >
-              {STR.play.undo}
-            </button>
-          )}
-
           {isFirstDraw ? (
             <button
               onClick={handleNext}
