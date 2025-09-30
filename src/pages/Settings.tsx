@@ -341,7 +341,16 @@ export function Settings() {
     return (
       <div
         key={player.id}
-        className={`flex items-center justify-between rounded-xl border-2 p-4 shadow-sm transition ${
+        role="button"
+        tabIndex={0}
+        onClick={() => openPlayerModal(player)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openPlayerModal(player);
+          }
+        }}
+        className={`flex cursor-pointer items-center justify-between rounded-xl border-2 p-4 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
           isRecent ? 'ring-2 ring-offset-2 ring-blue-400' : ''
         }`}
         style={{
@@ -358,20 +367,17 @@ export function Settings() {
           >
             {player.avatar}
           </div>
-          <div>
-            <button
-              type="button"
-              onClick={() => openPlayerModal(player)}
-              className="text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-            >
-              <span className="block text-lg font-semibold">{player.name}</span>
-              <span className="block text-xs text-black/60">{STR.settings.tapToEdit}</span>
-            </button>
+          <div className="text-left">
+            <span className="block text-lg font-semibold">{player.name}</span>
+            <span className="block text-xs text-black/60">{STR.settings.tapToEdit}</span>
           </div>
         </div>
         <button
           type="button"
-          onClick={() => handleRemovePlayer(player)}
+          onClick={(event) => {
+            event.stopPropagation();
+            handleRemovePlayer(player);
+          }}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-white/70 text-red-600 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
           aria-label={STR.settings.removePlayer(player.name)}
         >
